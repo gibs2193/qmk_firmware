@@ -44,62 +44,59 @@ enum {
 #pragma pack(1)
 
 typedef struct __attribute__((__packed__)){
-    uint8_t actn_pt;
-    uint8_t deactn_pt;
+    uint16_t actn_pt;
+    uint16_t deactn_pt;
 } activity_point_t;
 
 typedef struct __attribute__((__packed__)){
     uint8_t  mode;                  // 1 byte
     uint8_t  state;                 // 1 byte
-    uint8_t  travel;                // 1 byte
-    uint8_t last_travel;            // for debug
-    bool    debug;
+    uint16_t  travel;                // 2 bytes
     uint8_t r;
     uint8_t c;
     uint16_t value;                 // 2 bytes, value
-    uint16_t last_val;              // 2 bytes, last value
 
     activity_point_t regular;       // 4 bytes, actuation point
     union {                         // 4 bytes
         activity_point_t rapid;
         activity_point_t full;
     };
-    union {                         // 2 bytes
+    union {                         // 1 byte
         uint8_t rpd_trig_sen;       // rapid trig sensitivity
         uint8_t okmc_idx;
         uint8_t js_axis;            // joystick x/y axis
         uint8_t hold;
     };
-    uint8_t rpd_trig_sen_rls;
+    uint8_t rpd_trig_sen_rls;	    // 1 byte
 } analog_key_t;
-// size of analog_key_t is 16 bytes
+// size of analog_key_t is 18 bytes
 
 typedef struct __attribute__((__packed__)) {
-    uint8_t actn_pt;                        // unit: 0.1mm
-    uint8_t deactn_pt;                      // unit: 0.1mm
+    uint16_t actn_pt;                        // unit: 0.1mm
+    uint16_t deactn_pt;                      // unit: 0.1mm
 } traval_config_t;
 
 typedef struct __attribute__((__packed__)) {
-    uint8_t mode:2;                         // 2 bits, basic mode
-    uint8_t act_pt:6;                       // 6 bits
-    uint8_t rpd_trig_sen:6;                 // 6 bits rapid trig sensitivity, unit: 0.1mm
-    uint8_t rpd_trig_sen_deact:6;           // 6 bits
+    uint8_t mode:4;                         // 4 bits, basic mode
     uint8_t adv_mode:4;                     // 4 bits, advance mode
     union {                                 // 1 byte, additional information of advance mode
         uint8_t adv_mode_data;
         uint8_t okmc_idx;                   //  okmc setting index
         uint8_t js_axis;                    //  joystick x/y axis
     };
+     uint16_t act_pt:12;                       // 12 bits
+     uint16_t rpd_trig_sen:10;                 // 10 bits rapid trig sensitivity, unit: 0.1mm
+     uint16_t rpd_trig_sen_deact:10;           // 10 bits
 } analog_key_config_t;
-// size of analog_key_config_t is 4 bytes
+// size of analog_key_config_t is 6 bytes
 
 typedef struct __attribute__((__packed__)) {
-    uint8_t shallow_act:6;                  // unit: 0.1mm
-    uint8_t shallow_deact:6;                // unit: 0.1mm
-    uint8_t deep_act:6;                     // unit: 0.1mm
-    uint8_t deep_deact:6;                   // unit: 0.1mm
+    uint16_t shallow_act:10;                  // unit: 0.1mm
+    uint16_t shallow_deact:10;                // unit: 0.1mm
+    uint16_t deep_act:10;                     // unit: 0.1mm
+    uint16_t deep_deact:10;                   // unit: 0.1mm
 } okmc_traval_config_t;
-// size  = 3 bytes
+// size  = 5 bytes
 
 typedef struct
 {
@@ -111,11 +108,11 @@ typedef struct
 // size  = 2 bytes
 
 typedef struct __attribute__((__packed__)) {
-    okmc_traval_config_t travel;             // 3
+    okmc_traval_config_t travel;             // 5
     uint16_t keycode[4];                     // 2*4
     okmc_action_t action[4];                 // 2*4
 } okmc_config_t;
-// size  = 19 bytes
+// size  = 21 bytes
 
 typedef struct __attribute__((__packed__)) {
     uint8_t key_1_row:3;
@@ -127,10 +124,10 @@ typedef struct __attribute__((__packed__)) {
 // size  = 3 bytes
 
 typedef struct __attribute__((__packed__)) {
-    uint8_t x;                              // 1
-    uint8_t y;;                             // 1
+    uint16_t x;                              // 2 bytes
+    uint16_t y;;                             // 2 bytes
 } point_t;
-// size  = 2 bytes
+// size  = 4 bytes
 
 typedef struct __attribute__((__packed__)) {
     analog_key_config_t global;
@@ -143,7 +140,7 @@ typedef struct __attribute__((__packed__)) {
 
 typedef struct __attribute__((__packed__)){
     uint16_t zero_travel:12;       // zero travel
-    uint16_t full_travel:12;       // zero travel
+    uint16_t full_travel:12;       // full travel
 } calibrated_value_t;
 
 typedef struct __attribute__((__packed__)){

@@ -883,7 +883,7 @@ bool rgb_matrix_is_driver_shutdown(void) {
 }
 
 __attribute__((weak)) bool rgb_matrix_driver_allow_shutdown(void) {
-    return true;
+    return false;
 };
 #endif
 

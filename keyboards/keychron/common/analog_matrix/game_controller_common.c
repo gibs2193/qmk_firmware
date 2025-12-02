@@ -27,12 +27,29 @@ float        slope[CURVE_POINTS_COUNT - 1];
 matrix_row_t game_controller_matrix[MATRIX_ROWS] = {0};
 
 void game_controller_curve_init(point_t *pt) {
+    // Copy the curve points from input
     memcpy(curve, pt, CURVE_POINTS_COUNT * SIZE_OF_POINT_T);
 
-    if (curve[0].y == 0 && curve[1].y == 0 && curve[2].y == 0 && curve[3].y == 0) {
-        point_t default_curve[CURVE_POINTS_COUNT] = {{0, 0}, {10, 31}, {30, 95}, {40, 127}};
+    // Check if the curve has valid points or if it needs to be replaced with the default
+    int all_zeroes = 1;
+    for (int i = 0; i < CURVE_POINTS_COUNT; i++) {
+        if (curve[i].y != 0) {
+            all_zeroes = 0;
+            break;
+        }
+    }
+
+    // If all curve points are zero, load the default curve
+    if (all_zeroes) {
+        // Using the new x/y points and the default slope of 32f
+        point_t default_curve[CURVE_POINTS_COUNT] = {
+            {0,    0},    // Point 0
+            {256,  8191}, // Point 1
+            {767,  24575},// Point 2
+            {1024, 32767} // Point 3
+        };
         memcpy(curve, default_curve, sizeof(default_curve));
-        slope[0] = slope[1] = slope[2] = 3.175f;
+        slope[0] = slope[1] = slope[2] = 32.0f;
     }
 }
 
@@ -62,21 +79,41 @@ bool game_controller_mode_set(uint8_t mode) {
     return true;
 }
 
-bool game_controller_set_curve(point_t *pt) {
-    if (curve[0].x > curve[1].x || curve[1].x > curve[2].x || curve[2].x > curve[3].x) return false;
+bool game_controller_set_curve(uint8_t *raw) {
+    point_t temp[CURVE_POINTS_COUNT];
 
-    memcpy(curve, pt, sizeof(curve));
-    if (curve[0].x != curve[1].x) slope[0] = (float)(curve[1].y - curve[0].y) / (curve[1].x - curve[0].x);
-    if (curve[1].x != curve[2].x) slope[1] = (float)(curve[2].y - curve[1].y) / (curve[2].x - curve[1].x);
-    if (curve[2].x != curve[3].x) slope[2] = (float)(curve[3].y - curve[2].y) / (curve[3].x - curve[2].x);
+    for (int i = 0; i < CURVE_POINTS_COUNT; i++) {
+        uint16_t x = (uint16_t)raw[i * 4 + 0] | ((uint16_t)raw[i * 4 + 1] << 8);
+        uint16_t y = (uint16_t)raw[i * 4 + 2] | ((uint16_t)raw[i * 4 + 3] << 8);
+        temp[i].x = x;
+        temp[i].y = y;
+    }
 
+    // Check X monotonicity
+    if (temp[0].x > temp[1].x || temp[1].x > temp[2].x || temp[2].x > temp[3].x) {
+        return false;
+    }
+
+    memcpy(curve, temp, sizeof(temp));
+
+    for (int i = 0; i < CURVE_POINTS_COUNT - 1; i++) {
+        float dx = (float)(curve[i + 1].x - curve[i].x);
+        float dy = (float)(curve[i + 1].y - curve[i].y);
+        slope[i] = (dx != 0.0f) ? (dy / dx) : 0.0f;
+    }
     analog_matrix_eeprom_update(curve, (uint8_t *)OFFSET_CURVE_PTS_START, CURVE_POINTS_COUNT * SIZE_OF_POINT_T);
 
     return true;
 }
 
 bool game_controller_get_curve(uint8_t *data) {
-    memcpy(data, curve, sizeof(curve));
+    // Encode 16-bit x/y pairs in little-endian order
+    for (int i = 0; i < CURVE_POINTS_COUNT; i++) {
+        data[i * 4 + 0] = (uint8_t)(curve[i].x & 0xFF);
+        data[i * 4 + 1] = (uint8_t)((curve[i].x >> 8) & 0xFF);
+        data[i * 4 + 2] = (uint8_t)(curve[i].y & 0xFF);
+        data[i * 4 + 3] = (uint8_t)((curve[i].y >> 8) & 0xFF);
+    }
     return true;
 }
 

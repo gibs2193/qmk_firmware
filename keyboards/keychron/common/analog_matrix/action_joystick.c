@@ -26,7 +26,7 @@ extern float        slope[CURVE_POINTS_COUNT - 1];
 extern bool         regular_trigger_action(analog_key_t *key);
 extern matrix_row_t game_controller_matrix[MATRIX_ROWS];
 
-static uint8_t axis_travel[GC_MAX]    = {0};
+static uint16_t axis_travel[GC_MAX]    = {0};
 static bool    axis_changed[GC_MAX]   = {0};
 static int8_t  axis_dir[GC_MAX / 2]   = {0};
 static int32_t axis_value[GC_MAX / 2] = {0};
@@ -40,24 +40,35 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
     JOYSTICK_AXIS_VIRTUAL, // rz
 };
 
-static uint8_t travel_to_joystick_axis(uint8_t axis, uint8_t travel) {
+static uint16_t travel_to_joystick_axis(uint8_t axis, uint8_t travel) {
     (void)axis;
 
-    uint8_t axis_value = 0;
-    float   t          = travel / 6;
-    if (t > curve[3].x) {
-        axis_value = curve[3].y;
-    } else if (t > curve[2].x) {
-        axis_value = curve[2].y + slope[2] * (t - curve[2].x);
-    } else if (t > curve[1].x) {
-        axis_value = curve[1].y + slope[1] * (t - curve[1].x);
-    } else if (t > curve[0].x) {
-        axis_value = curve[0].y + slope[0] * (t - curve[0].x);
+
+    // Evaluate original curve (same logic as before)
+    float t = (float)travel;
+    float curve_value = 0.0f;
+
+    if (t > (float)curve[3].x) {
+        curve_value = (float)curve[3].y;
+    } else if (t > (float)curve[2].x) {
+        curve_value = (float)curve[2].y + slope[2] * (t - (float)curve[2].x);
+    } else if (t > (float)curve[1].x) {
+        curve_value = (float)curve[1].y + slope[1] * (t - (float)curve[1].x);
+    } else if (t > (float)curve[0].x) {
+        curve_value = (float)curve[0].y + slope[0] * (t - (float)curve[0].x);
     }
+    // Clamp to 0–32767 domain
+    if (curve_value < 0.0f) curve_value = 0.0f;
+    if (curve_value > 32767.0f) curve_value = 32767.0f;
 
-    if (axis_value > JOYSTICK_MAX_VALUE) axis_value = JOYSTICK_MAX_VALUE;
+    // Scale 0–32757 -> 0–JOYSTICK_MAX_VALUE
+    float scale = (float)JOYSTICK_MAX_VALUE / 32767.0f;
+    uint32_t scaled = (uint32_t)(curve_value * scale + 0.5f);
 
-    return axis_value;
+    if (scaled > (uint32_t)JOYSTICK_MAX_VALUE)
+        scaled = (uint32_t)JOYSTICK_MAX_VALUE;
+
+    return (uint16_t)scaled;
 }
 
 bool joystick_update(analog_key_t *key) {
@@ -141,7 +152,7 @@ static void joystick_action(void) {
         uint32_t r_square    = ((FULL_TRAVEL_UNIT + 1) * TRAVEL_SCALE) * ((FULL_TRAVEL_UNIT + 1) * TRAVEL_SCALE);
         if (axis_square > r_square) {
             uint32_t sqrt  = sqrt_uint32(axis_square);
-            float    ratio = 276.0f / sqrt;
+            float    ratio = 950.0f / sqrt;
 
             axis_value[GC_AXIS_X] = axis_value[GC_AXIS_X] * ratio;
             axis_value[GC_AXIS_Y] = axis_value[GC_AXIS_Y] * ratio;
@@ -165,7 +176,7 @@ static void joystick_action(void) {
         axis_square = rx * rx + ry * ry;
         if (axis_square > r_square) {
             uint32_t sqrt  = sqrt_uint32(axis_square);
-            float    ratio = 276.0f / sqrt;
+            float    ratio = 950.0f / sqrt;
 
             axis_value[GC_AXIS_RX] = axis_value[GC_AXIS_RX] * ratio;
             axis_value[GC_AXIS_RY] = axis_value[GC_AXIS_RY] * ratio;

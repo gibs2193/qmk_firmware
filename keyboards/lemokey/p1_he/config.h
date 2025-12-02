@@ -104,3 +104,5 @@
 #define FN_KEY_1 MO(1)
 #define FN_KEY_2 MO(3)
 #define FN_BL_TRIG_KEY KC_END
+#define F_CPU 84000000UL   // Define F_CPU as 84 MHz
+#define CH_CFG_ST_FREQUENCY 50000

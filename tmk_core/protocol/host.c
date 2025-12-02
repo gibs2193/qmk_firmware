@@ -215,56 +215,23 @@ void host_consumer_send(uint16_t usage) {
 void host_joystick_send(joystick_t *joystick) {
     if (!driver) return;
 
-    report_joystick_t report = {
-#    ifdef JOYSTICK_SHARED_EP
-        .report_id = REPORT_ID_JOYSTICK,
-#    endif
-#    if JOYSTICK_AXIS_COUNT > 0
-        .axes =
-            {
-                joystick->axes[0],
+    report_joystick_t report;
+    memset(&report, 0, sizeof(report));
 
-#        if JOYSTICK_AXIS_COUNT >= 2
-                joystick->axes[1],
-#        endif
-#        if JOYSTICK_AXIS_COUNT >= 3
-                joystick->axes[2],
-#        endif
-#        if JOYSTICK_AXIS_COUNT >= 4
-                joystick->axes[3],
-#        endif
-#        if JOYSTICK_AXIS_COUNT >= 5
-                joystick->axes[4],
-#        endif
-#        if JOYSTICK_AXIS_COUNT >= 6
-                joystick->axes[5],
-#        endif
-            },
-#    endif
+#ifdef JOYSTICK_SHARED_EP
+    report.report_id = REPORT_ID_JOYSTICK;
+#endif
 
-#    ifdef JOYSTICK_HAS_HAT
-        .hat = joystick->hat,
-#    endif
+    size_t copy_axes_bytes = sizeof(report.axes);
+    if (copy_axes_bytes > sizeof(joystick->axes))
+        copy_axes_bytes = sizeof(joystick->axes);
+    memcpy(report.axes, joystick->axes, copy_axes_bytes);
 
-#    if JOYSTICK_BUTTON_COUNT > 0
-        .buttons =
-            {
-                joystick->buttons[0],
+    size_t copy_buttons_bytes = sizeof(report.buttons);
+    if (copy_buttons_bytes > sizeof(joystick->buttons))
+        copy_buttons_bytes = sizeof(joystick->buttons);
+    memcpy(report.buttons, joystick->buttons, copy_buttons_bytes);
 
-#        if JOYSTICK_BUTTON_COUNT > 8
-                joystick->buttons[1],
-#        endif
-#        if JOYSTICK_BUTTON_COUNT > 16
-                joystick->buttons[2],
-#        endif
-#        if JOYSTICK_BUTTON_COUNT > 24
-                joystick->buttons[3],
-#        endif
-            },
-#    endif
-    };
-
-    memcpy(report.buttons, joystick->buttons, (JOYSTICK_BUTTON_COUNT - 1) / 8 + 1);
     (*driver->send_joystick)(&report);
 }
 #endif

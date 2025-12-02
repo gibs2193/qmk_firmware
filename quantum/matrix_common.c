@@ -11,7 +11,7 @@
 #endif
 
 #ifndef MATRIX_IO_DELAY
-#    define MATRIX_IO_DELAY 30
+#    define MATRIX_IO_DELAY 1
 #endif
 
 /* matrix state(1:on, 0:off) */

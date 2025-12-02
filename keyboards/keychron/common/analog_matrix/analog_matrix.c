@@ -32,10 +32,10 @@
 #endif
 
 #ifndef REF_ZERO_TRAVEL
-#    define REF_ZERO_TRAVEL 3121
+#    define REF_ZERO_TRAVEL 3100
 #endif
 #ifndef REF_FULL_TRAVEL
-#    define REF_FULL_TRAVEL 1940
+#    define REF_FULL_TRAVEL 2100
 #endif
 #define REF_RANGE (REF_ZERO_TRAVEL - REF_FULL_TRAVEL)
 
@@ -136,11 +136,11 @@ static uint8_t  last_calib_col  = 0xFF;
 
 uint32_t debug_interval = 0;
 
-uint8_t analog_matrix_get_travel(uint8_t row, uint8_t col) {
+uint16_t analog_matrix_get_travel(uint8_t row, uint8_t col) {
     return analog_key_matrix[row][col].travel;
 }
 
-static uint8_t convert_to_travel(uint8_t row, uint8_t col, uint16_t value) {
+static uint16_t convert_to_travel(uint8_t row, uint8_t col, uint16_t value) {
 #define DEAD_ZONE 30
     uint16_t travel;
     int16_t  delta = calib_values[row][col].zero_travel - DEAD_ZONE - value;
@@ -157,7 +157,7 @@ static uint8_t convert_to_travel(uint8_t row, uint8_t col, uint16_t value) {
     travel = (uint16_t)((TRAVEL_POLYNOMIAL(x) - TRAVEL_POLYNOMIAL(REF_ZERO_TRAVEL)) * scale_factor[row][col] * TRAVEL_SCALE + 0.5);
     if (travel > (FULL_TRAVEL_UNIT + 1) * TRAVEL_SCALE - 1) travel = (FULL_TRAVEL_UNIT + 1) * TRAVEL_SCALE - 1;
 
-    return travel & 0xFF;
+    return travel;
 }
 
 void update_key_config(uint8_t row, uint8_t col) {
@@ -202,12 +202,6 @@ void update_key_config(uint8_t row, uint8_t col) {
         p_key->rpd_trig_sen_rls = cur_prof->global.rpd_trig_sen_deact == 0 ? cur_prof->global.rpd_trig_sen : cur_prof->global.rpd_trig_sen_deact;
     else
         p_key->rpd_trig_sen_rls = p_key_cfg->rpd_trig_sen_deact;
-
-    /* Scale by TRAVEL_SCALE */
-    p_key->regular.actn_pt *= TRAVEL_SCALE;
-    p_key->regular.deactn_pt *= TRAVEL_SCALE;
-    p_key->rpd_trig_sen *= TRAVEL_SCALE;
-    p_key->rpd_trig_sen_rls *= TRAVEL_SCALE;
 
     // Update advance mode information
     if (p_key_cfg->adv_mode == AKM_DKS && p_key_cfg->okmc_idx < OKMC_COUNT) {
@@ -598,7 +592,14 @@ void analog_matrix_eeconfig_init(void) {
 
     // Load curve points
     point_t curve[CURVE_POINTS_COUNT];
-    memcpy(curve, buf + OFFSET_CURVE_PTS_START, CURVE_POINTS_COUNT * SIZE_OF_POINT_T);
+    for (int i = 0; i < CURVE_POINTS_COUNT; i++) {
+    uint16_t x = (uint16_t)buf[OFFSET_CURVE_PTS_START + i * 4 + 0]
+              | ((uint16_t)buf[OFFSET_CURVE_PTS_START + i * 4 + 1] << 8);
+    uint16_t y = (uint16_t)buf[OFFSET_CURVE_PTS_START + i * 4 + 2]
+              | ((uint16_t)buf[OFFSET_CURVE_PTS_START + i * 4 + 3] << 8);
+    curve[i].x = x;
+    curve[i].y = y;
+    }
     game_controller_curve_init(curve);
     game_controller_mode_init(buf[OFFSET_GAME_CONTROLLER_MODE_START]);
 
@@ -680,15 +681,8 @@ bool update_raw_value(uint8_t row, uint8_t col, uint16_t value) {
 
     analog_key_t *k = &analog_key_matrix[row][col];
 
-    if (abs(k->last_val - value) < 5) return false;
-
-    k->last_val = value;
     k->value    = value;
     k->travel   = convert_to_travel(row, col, value);
-
-    if (k->travel == k->last_travel) return false;
-
-    k->last_travel = k->travel;
 
     bool ret = false;
 
@@ -897,15 +891,21 @@ void analog_matrix_rx(uint8_t *data, uint8_t length) {
             break;
 
         case AMC_SET_TRAVAL: {
-            uint8_t  profile               = data[2];
-            uint8_t  mode                  = data[3];
-            uint8_t  act_pt                = data[4];
-            uint8_t  sens                  = data[5];
-            uint8_t  rls_sens              = data[6];
-            bool     entire                = data[7];
+            uint8_t profile = data[2];
+            uint8_t mode    = data[3];
+
+            // combine bytes 4 and 5 into a 16-bit act_pt
+            uint16_t act_pt = ((uint16_t)data[5] << 8) | data[4];
+
+            // combine bytes 6+7 and 8+9 into 16-bit sens and rls_sens
+            uint16_t sens     = ((uint16_t)data[7] << 8) | data[6];
+            uint16_t rls_sens = ((uint16_t)data[9] << 8) | data[8];
+
+            bool entire = data[10];
+
             uint32_t row_mask[MATRIX_ROWS] = {0};
             if (!entire) {
-                for (uint8_t i = 0, j = 8; i < MATRIX_ROWS; i++, j += 3) {
+                for (uint8_t i = 0, j = 11; i < MATRIX_ROWS; i++, j += 3) {
                     memcpy(&row_mask[i], &data[j], 3);
                 }
             }
@@ -945,7 +945,7 @@ void analog_matrix_rx(uint8_t *data, uint8_t length) {
             break;
 
         case AMC_SET_CURVE:
-            success = game_controller_set_curve((point_t *)&data[2]);
+            success = game_controller_set_curve(&data[2]);
             data[2] = success ? 0 : 1;
             break;
 

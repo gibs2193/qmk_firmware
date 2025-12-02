@@ -36,7 +36,7 @@
     },
     "rgb_matrix": {
         "driver": "snled27351_spi",
-        "sleep": true,
+        "sleep": false,
         "animations": {
             "band_spiral_val": true,
             "breathing": true,
@@ -69,7 +69,8 @@
         }
     },
     "build": {
-        "debounce_type": "sym_eager_pk"
+        "debounce_type": "sym_eager_pk",
+        "lto": true
     },
     "debounce": 0
 }

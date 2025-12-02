@@ -129,9 +129,9 @@ void profile_init(bool reset) {
             if (profile[i].global.mode == 0) profile[i].global.mode = profile_gobal_mode[i]; // global mode can't be 0
 
             // Resotre to default if not in valid range
-            if (profile[i].global.act_pt == 0 || profile[i].global.act_pt > 40) profile[i].global.act_pt = DEFAULT_ACTUATION_POINT;
-            if (profile[i].global.rpd_trig_sen == 0 || profile[i].global.rpd_trig_sen > 39) profile[i].global.rpd_trig_sen = DEFAULT_RAPID_TRIGGER_SENSITIVITY;
-            if (profile[i].global.rpd_trig_sen_deact == 0 || profile[i].global.rpd_trig_sen > 39) profile[i].global.rpd_trig_sen_deact = profile[i].global.rpd_trig_sen;
+            if (profile[i].global.act_pt == 0 || profile[i].global.act_pt > 1023) profile[i].global.act_pt = DEFAULT_ACTUATION_POINT;
+            if (profile[i].global.rpd_trig_sen == 0 || profile[i].global.rpd_trig_sen > 999) profile[i].global.rpd_trig_sen = DEFAULT_RAPID_TRIGGER_SENSITIVITY;
+            if (profile[i].global.rpd_trig_sen_deact == 0 || profile[i].global.rpd_trig_sen > 999) profile[i].global.rpd_trig_sen_deact = profile[i].global.rpd_trig_sen;
         }
 
         free(buf);
@@ -189,11 +189,11 @@ bool profile_get_raw_data(uint8_t prof_idx, uint16_t offset, uint8_t size, uint8
     return true;
 }
 
-bool profile_set_traval(uint8_t prof_idx, uint8_t mode, uint8_t act_pt, uint8_t sens, uint8_t rls_sens, bool global, uint32_t row[]) {
+bool profile_set_traval(uint8_t prof_idx, uint8_t mode, uint16_t act_pt, uint16_t sens, uint16_t rls_sens, bool global, uint32_t row[]) {
     analog_matrix_profile_t *prof = profile_get(prof_idx);
 
     // Check validity
-    if (prof_idx >= PROFILE_COUNT || mode > AKM_RAPID || act_pt < 0 || act_pt > 39 || (global && mode == AKM_GLOBAL)) return false;
+    if (prof_idx >= PROFILE_COUNT || mode > AKM_RAPID || act_pt < 0 || act_pt > 999 || (global && mode == AKM_GLOBAL)) return false;
 
     if (global) {
         prof->global.mode               = mode;
@@ -243,12 +243,17 @@ bool profile_set_adv_mode(uint8_t *data) {
         case ADV_MODE_OKMC:
             if (index >= OKMC_COUNT) return false;
 
-            okmc_config.travel.shallow_act   = data[5];
-            okmc_config.travel.shallow_deact = data[6];
-            okmc_config.travel.deep_act      = data[7];
-            okmc_config.travel.deep_deact    = data[8];
-            memcpy(okmc_config.keycode, &data[9], sizeof(okmc_config.keycode));
-            memcpy(okmc_config.action, &data[17], sizeof(okmc_config.action));
+            // --- now read 16-bit (10-bit used) values ---
+            okmc_config.travel.shallow_act   = (uint16_t)data[5]  | ((uint16_t)data[6] << 8);
+            okmc_config.travel.shallow_deact = (uint16_t)data[7]  | ((uint16_t)data[8] << 8);
+            okmc_config.travel.deep_act      = (uint16_t)data[9]  | ((uint16_t)data[10] << 8);
+            okmc_config.travel.deep_deact    = (uint16_t)data[11] | ((uint16_t)data[12] << 8);
+
+            // 4x keycodes (each 2 bytes) → start after travel (index 13)
+            memcpy(okmc_config.keycode, &data[13], sizeof(okmc_config.keycode));
+
+            // 4x actions (each 2 bytes) → after keycodes (13 + 8 = 21)
+            memcpy(okmc_config.action, &data[21], sizeof(okmc_config.action));
 
             prof->okmc[index]   = okmc_config;
             p_key_cfg->adv_mode = AKM_DKS;
@@ -259,6 +264,7 @@ bool profile_set_adv_mode(uint8_t *data) {
             if (index >= GC_BUTTON_MAX) return false;
 
             p_key_cfg->adv_mode = AKM_GAMEPAD;
+            if (index >= GC_MAX) index %= GC_MAX;  // wrap or limit to valid range
             p_key_cfg->js_axis  = index;
             break;
 

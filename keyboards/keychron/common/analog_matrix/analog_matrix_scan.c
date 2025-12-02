@@ -127,7 +127,7 @@ static inline void shifter_delay(uint16_t n) {
 }
 
 static void HC164_output(uint16_t data, bool bit_flag) {
-    uint8_t n = 50;
+    uint8_t n = 15;
 
     ATOMIC_BLOCK_FORCEON {
         for (uint8_t i = 0; i < 15; i++) {
@@ -180,7 +180,7 @@ void matrix_read_rows_on_col(uint8_t current_col, matrix_row_t row_shifter) {
         return; // skip NO_PIN col
     }
 
-    wait_us(40);
+    wait_us(15);
 
     uint8_t debouce_times = ANALOG_DEBOUCE_TIME;
     uint8_t row_value     = 0;
@@ -264,9 +264,9 @@ void matrix_init_custom(void) {
         chn = pinToAdcChn(row_pins[x]);
         if (chn < 0xFF) {
             if (chn > 9)
-                smpr[0] |= ADC_SAMPLE_56 << ((chn - 10) * 3);
+                smpr[0] |= ADC_SAMPLE_28 << ((chn - 10) * 3);
             else
-                smpr[1] |= ADC_SAMPLE_56 << (chn * 3);
+                smpr[1] |= ADC_SAMPLE_28 << (chn * 3);
 
             sqr[chn_cnt / 6] |= chn << ((chn_cnt % 6) * 5);
             chn_cnt++;

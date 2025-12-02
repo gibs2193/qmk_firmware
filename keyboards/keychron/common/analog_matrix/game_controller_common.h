@@ -58,7 +58,7 @@ void game_controller_curve_init(point_t *pt);
 void game_controller_mode_init(uint8_t mode);
 bool game_controller_mode_get(uint8_t *data);
 bool game_controller_mode_set(uint8_t mode);
-bool game_controller_set_curve(point_t *pt);
+bool game_controller_set_curve(uint8_t *raw);
 bool game_controller_get_curve(uint8_t *data);
 bool game_controller_xinput_enabled(void);
 bool game_controller_type_enabled(void);

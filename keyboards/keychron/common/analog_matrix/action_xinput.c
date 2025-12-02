@@ -28,33 +28,33 @@ extern matrix_row_t game_controller_matrix[MATRIX_ROWS];
 static report_xinput_t xinput;
 static bool            xinput_changed = false;
 
-static uint8_t axis_travel[GC_MAX]    = {0};
+static uint16_t axis_travel[GC_MAX]    = {0};
 static bool    axis_changed[GC_MAX]   = {0};
 static int8_t  axis_dir[GC_MAX / 2]   = {0};
 static int32_t axis_value[GC_MAX / 2] = {0};
 
-static uint16_t travel_to_xinput_value(uint8_t axis, uint8_t travel) {
+static uint16_t travel_to_xinput_value(uint8_t axis, uint16_t travel) {
     static uint16_t max_values[GC_MAX] = {0x8000, 0x7FFF, 0x8000, 0x7FFF, 0xFF, 0xFF, 0x8000, 0x7FFF, 0x8000, 0x7FFF, 0x8000, 0x7FFF};
     uint32_t        axis_value         = 0;
 
-    if (axis == GC_Z_AXIS_P || axis == GC_Z_AXIS_N) {
+ /*   if (axis == GC_Z_AXIS_P || axis == GC_Z_AXIS_N) {
         // Don't apply curve to L/R Trigger
         axis_value = travel * 127 / FULL_TRAVEL_UNIT / TRAVEL_SCALE;
-    } else if (travel == 0) {
+    } else*/ if (travel == 0) {
         axis_value = 0;
-    } else if (travel >= curve[3].x * TRAVEL_SCALE) {
+    } else if (travel >= curve[3].x) {
         axis_value = curve[3].y;
-    } else if (travel >= curve[2].x * TRAVEL_SCALE) {
-        axis_value = curve[2].y + slope[2] * (travel - curve[2].x * TRAVEL_SCALE) / TRAVEL_SCALE;
-    } else if (travel >= curve[1].x * TRAVEL_SCALE) {
-        axis_value = curve[1].y + slope[1] * (travel - curve[1].x * TRAVEL_SCALE) / TRAVEL_SCALE;
-    } else if (travel >= curve[0].x * TRAVEL_SCALE) {
-        axis_value = curve[0].y + slope[0] * (travel - curve[0].x * TRAVEL_SCALE) / TRAVEL_SCALE;
+    } else if (travel >= curve[2].x) {
+        axis_value = curve[2].y + slope[2] * (travel - curve[2].x);
+    } else if (travel >= curve[1].x) {
+        axis_value = curve[1].y + slope[1] * (travel - curve[1].x);
+    } else if (travel >= curve[0].x) {
+        axis_value = curve[0].y + slope[0] * (travel - curve[0].x);
     }
 
     uint16_t range = max_values[axis];
 
-    axis_value = axis_value * range / 127;
+    axis_value = axis_value * range / 32767;
     if (axis_value > range) axis_value = range;
 
     return axis_value & 0xFFFF;
@@ -62,7 +62,7 @@ static uint16_t travel_to_xinput_value(uint8_t axis, uint8_t travel) {
 
 bool xinput_update(analog_key_t *key) {
 
-    if (key->travel < 1 * TRAVEL_SCALE) key->travel = 0;
+    if (key->travel < 1) key->travel = 0;
 
     if (key->js_axis < GC_MAX) {
         axis_travel[key->js_axis]  = key->travel;
@@ -153,7 +153,7 @@ void xinput_action(void) {
         uint32_t r_square    = 0x80 * 0x80;
         if (axis_square > r_square) {
             uint32_t sqrt  = sqrt_uint32(axis_square);
-            float    ratio = 140.0f / sqrt;
+            float    ratio = 127.0f / sqrt;
 
             axis_value[GC_AXIS_X] = axis_value[GC_AXIS_X] * ratio;
             axis_value[GC_AXIS_Y] = axis_value[GC_AXIS_Y] * ratio;
@@ -177,7 +177,7 @@ void xinput_action(void) {
         axis_square = x * x + y * y;
         if (axis_square > r_square) {
             uint32_t sqrt  = sqrt_uint32(axis_square);
-            float    ratio = 140.0f / sqrt;
+            float    ratio = 127.0f / sqrt;
 
             axis_value[GC_AXIS_RX] = axis_value[GC_AXIS_RX] * ratio;
             axis_value[GC_AXIS_RY] = axis_value[GC_AXIS_RY] * ratio;

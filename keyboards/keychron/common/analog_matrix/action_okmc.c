@@ -154,7 +154,7 @@ bool okmc_action(analog_key_t *key) {
     switch (key->state) {
         case OKMC_RELEASED:
             // Check shallow actuation
-            if (key->travel >= travel_cfg->shallow_act * TRAVEL_SCALE) {
+            if (key->travel >= travel_cfg->shallow_act) {
                 key->state = OKMC_SHALLOW_ACTUATED;
                 shallow_actuate(&cur_prof->okmc[key->okmc_idx]);
                 changed = true;
@@ -163,13 +163,13 @@ bool okmc_action(analog_key_t *key) {
 
         case OKMC_SHALLOW_ACTUATED:
             // Key releasing
-            if (key->travel < travel_cfg->shallow_deact * TRAVEL_SCALE && key->travel < (travel_cfg->shallow_act - 1) * TRAVEL_SCALE) {
+            if (key->travel < travel_cfg->shallow_deact && key->travel < (travel_cfg->shallow_act - 25)) {
                 key->state = OKMC_RELEASED;
                 release_okmc_keys(&cur_prof->okmc[key->okmc_idx]);
                 changed = true;
             }
             // Continue pressing
-            else if (key->travel >= travel_cfg->deep_act * TRAVEL_SCALE) {
+            else if (key->travel >= travel_cfg->deep_act) {
                 key->state = OKMC_DEEP_ACTUATED;
                 deep_actuate(&cur_prof->okmc[key->okmc_idx]);
                 changed = true;
@@ -179,7 +179,7 @@ bool okmc_action(analog_key_t *key) {
         case OKMC_DEEP_ACTUATED:
             if (key->travel > travel_cfg->deep_deact * TRAVEL_SCALE) {
                 key->state = OKMC_DEEP_DEACT_READY; // make su
-            } else if (key->travel < travel_cfg->shallow_deact * TRAVEL_SCALE && key->travel < (travel_cfg->shallow_act - 1) * TRAVEL_SCALE) {
+            } else if (key->travel < travel_cfg->shallow_deact && key->travel < (travel_cfg->shallow_act - 25)) {
                 key->state = OKMC_RELEASED;
                 release_okmc_keys(&cur_prof->okmc[key->okmc_idx]);
                 changed = true;

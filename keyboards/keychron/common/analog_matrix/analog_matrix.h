@@ -23,14 +23,14 @@
 #include "analog_matrix_eeconfig.h"
 #include "analog_matrix_type.h"
 
-#define FULL_TRAVEL_UNIT 40
+#define FULL_TRAVEL_UNIT 1023
 
 #ifndef DEFAULT_ACTUATION_POINT
-#    define DEFAULT_ACTUATION_POINT 20
+#    define DEFAULT_ACTUATION_POINT 500
 #endif
 
 #ifndef DEFAULT_RAPID_TRIGGER_SENSITIVITY
-#    define DEFAULT_RAPID_TRIGGER_SENSITIVITY 4
+#    define DEFAULT_RAPID_TRIGGER_SENSITIVITY 100
 #endif
 
 #ifndef DEFAULT_ZERO_TRAVEL_VALUE
@@ -38,7 +38,7 @@
 #endif
 
 #ifndef DEFAULT_FULL_RANGE
-#    define DEFAULT_FULL_RANGE 900
+#    define DEFAULT_FULL_RANGE 1023
 #endif
 
 #define DEFAULT_FULL_TRAVEL_VALUE (DEFAULT_ZERO_TRAVEL_VALUE - DEFAULT_FULL_RANGE)
@@ -52,15 +52,15 @@
 #endif
 
 #ifndef STATIC_HYSTERESIS
-#    define STATIC_HYSTERESIS 5
+#    define STATIC_HYSTERESIS 50
 #endif
 
 #ifndef RAPID_TRIGGER_TICK
-#    define RAPID_TRIGGER_TICK 10
+#    define RAPID_TRIGGER_TICK 25
 #endif
 
 #ifndef MIN_ACTUATION
-#    define MIN_ACTUATION 5
+#    define MIN_ACTUATION 100
 #endif
 
 #ifndef ZERO_TRAVEL_DEAD_ZONE
@@ -68,17 +68,17 @@
 #endif
 
 #ifndef BOTTOM_DEAD_ZONE
-#    define BOTTOM_DEAD_ZONE 38
+#    define BOTTOM_DEAD_ZONE 1000
 #endif
 
 #ifndef BOTTOM_JITTER
 #    define BOTTOM_JITTER 80
 #endif
 
-#define TRAVEL_SCALE 6
+#define TRAVEL_SCALE 1
 
 #ifndef ANALOG_DEBOUCE_TIME
-#    define ANALOG_DEBOUCE_TIME 3
+#    define ANALOG_DEBOUCE_TIME 2
 #endif
 
 // Threshold value when the magnet switch is not installed
@@ -117,7 +117,7 @@ void analog_matrix_eeprom_update(const void *buf, void *addr, size_t len);
 void analog_matrix_set_mins(uint16_t *min);
 void analog_matrix_set_maxs(uint16_t *max);
 
-uint8_t      analog_matrix_get_travel(uint8_t row, uint8_t col);
+uint16_t      analog_matrix_get_travel(uint8_t row, uint8_t col);
 uint8_t      analog_matrix_get_key_mode(uint8_t row, uint8_t col);
 bool         analog_matrix_get_key_state(uint8_t row, uint8_t col);
 bool         analog_matrix_calibrating(void);

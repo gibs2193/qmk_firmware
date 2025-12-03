@@ -1,4 +1,4 @@
-/* Copyright 2022 ~ 2025 @ lokher (https://www.keychron.com)
+/* Copyright 2024 ~ 2025 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,19 @@
 
 #pragma once
 
-void factory_test_init(void);
-#if defined(LED_MATRIX_ENABLE) || defined(RGB_MATRIX_ENABLE)
-bool factory_test_indicator(void);
-#endif
-bool factory_reset_indicating(void);
-void factory_test_task(void);
-void factory_test_rx(bool usb, uint8_t *data, uint8_t length);
+#ifdef LED_MATRIX_ENABLE
+/* LED Current Configuration */
+#    define SNLED27351_CURRENT_TUNE \
+        { 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30 }
+#    define SNLED27351_PHASE_CHANNEL SNLED27351_SCAN_PHASE_6_CHANNEL
 
-bool process_record_factory_test(uint16_t keycode, keyrecord_t *record);
+/* LED matrix driver configuration */
+#    define LED_MATRIX_LED_COUNT 61
+
+/* Low battery indicating led */
+#    define LOW_BAT_IND_INDEX \
+        { 56 }
+#    define DIM_CAPS_LOCK
+#    define CAPS_LOCK_INDEX 28
+
+#endif

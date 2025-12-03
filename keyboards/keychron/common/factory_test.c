@@ -15,6 +15,7 @@
  */
 
 #include "quantum.h"
+#include "keychron_common.h"
 #include "usb_descriptor.h"
 #include "raw_hid.h"
 #include "keychron_raw_hid.h"
@@ -103,7 +104,6 @@ enum {
 };
 
 enum {
-    KEY_PRESS_FN             = 0x01 << 0,
     KEY_PRESS_J              = 0x01 << 1,
     KEY_PRESS_Z              = 0x01 << 2,
     KEY_PRESS_BL_KEY1        = 0x01 << 3,
@@ -387,13 +387,11 @@ void analog_matrix_factory_reset(void) {
 }
 #endif
 
-bool factory_test_task(void) {
+void factory_test_task(void) {
     if (factory_reset_timer) factory_timer_check();
 #ifdef ANANLOG_MATRIX
     analog_matrix_factory_reset();
 #endif
-
-    return true;
 }
 
 void factory_test_send(bool usb, uint8_t *payload, uint8_t length) {

@@ -23,6 +23,7 @@
 #include "eeprom.h"
 #include "nvm_eeprom_eeconfig_internal.h"
 #include "keychron_common.h"
+#include "factory_test.h"
 #if defined(LK_WIRELESS_ENABLE) || defined(KC_BLUETOOTH_ENABLE)
 #    include "transport.h"
 #endif

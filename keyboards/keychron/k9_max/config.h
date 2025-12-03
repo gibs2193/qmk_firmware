@@ -1,4 +1,4 @@
-/* Copyright 2025 @ Keychron (https://www.keychron.com)
+/* Copyright 2024 ~ 2025 @ Keychron (https://www.keychron.com)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,27 +18,8 @@
 
 #include "eeconfig_kb.h"
 
-/* External EEPROM Configuration*/
-#define I2C_DRIVER I2CD3
-#define I2C1_SCL_PIN A8
-#define I2C1_SDA_PIN C9
-#define EXTERNAL_EEPROM_WP_PIN B10
-
-/* Analog Matrix Configuration */
-#define ANALOG_MATRIX_POWER_PIN C13
-#define ANALOG_MATRIX_POWER_ENABLE_LEVEL 1
-#define ANALOG_MATRIX_WAKEUP_PIN C5
-
-#define ENCODER_SWITCH_PIN A3
-
-/* Joystick Configuration */
-#ifdef JOYSTICK_ENABLE
-#    define JOYSTICK_AXIS_COUNT 6
-#    define JOYSTICK_BUTTON_COUNT 16
-#endif
-
-/* SPI Configuration */
-#if defined(RGB_MATRIX_ENABLE) || defined(LK_WIRELESS_ENABLE)
+/* SPI configuration */
+#if defined(RGB_MATRIX_ENABLE) || defined(LED_MATRIX_ENABLE) || defined(LK_WIRELESS_ENABLE)
 #    define SPI_DRIVER SPID1
 #    define SPI_SCK_PIN A5
 #    define SPI_MISO_PIN A6
@@ -46,20 +27,15 @@
 #endif
 
 /* SNLED27351 Driver Configuration */
-#if defined(RGB_MATRIX_ENABLE)
-#    define SNLED27351_SELECT_PINS \
-        { B8, B9 }
+#if defined(RGB_MATRIX_ENABLE) || defined(LED_MATRIX_ENABLE)
 #    define SNLED27351_SDB_PIN B7
+#    define SNLED27351_SELECT_PINS \
+        { C9 }
 #    define SNLED27351_SPI_DIVISOR 16
 #endif
 
-/* Wireless Configuration */
 #ifdef LK_WIRELESS_ENABLE
-/* Hardware Configuration */
-#    define SPI_SCK_PIN A5
-#    define SPI_MISO_PIN A6
-#    define SPI_MOSI_PIN A7
-
+/* Hardware configuration */
 #    define P24G_MODE_SELECT_PIN A10
 #    define BT_MODE_SELECT_PIN A9
 
@@ -73,20 +49,22 @@
 #    define BAT_CHARGING_PIN B13
 #    define BAT_CHARGING_LEVEL 0
 
-#    define BAT_LOW_LED_PIN A15
+#    define BAT_LOW_LED_PIN B12
 #    define BAT_LOW_LED_PIN_ON_STATE 1
 
-#    if defined(RGB_MATRIX_ENABLE)
-#        define BT_INDCATION_LED_MATRIX_LIST \
-            { 21, 22, 23 }
+#    if defined(RGB_MATRIX_ENABLE) || defined(LED_MATRIX_ENABLE)
 
-#        define P24G_INDICATION_LED_INDEX 24
+#        define BT_INDCATION_LED_MATRIX_LIST \
+            { 15, 16, 17 }
+
+#        define P24G_INDICATION_LED_INDEX 18
 
 #        define BAT_LEVEL_LED_LIST \
-            { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }
+            { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
 
 /* Reinit LED driver on tranport changed */
 #        define LED_DRIVER_REINIT_ON_TRANSPORT_CHANGE
+
 #    endif
 
 /* Keep USB connection in wireless mode */
@@ -96,6 +74,7 @@
 #    define WIRELESS_NKRO_ENABLE
 #endif
 
-/* Factory Test Keys */
-#define FN_KEY_1 MO(1)
-#define FN_KEY_2 MO(3)
+/* Factory test keys */
+#define FN_KEY_1 MO(4)
+#define BL_CYCLE_KEY KC_RCTL
+#define BL_TRIG_KEY KC_BSPC

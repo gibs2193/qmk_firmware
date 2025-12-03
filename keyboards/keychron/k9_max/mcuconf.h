@@ -16,21 +16,22 @@
 
 #pragma once
 
-#define _CHIBIOS_HAL_CONF_VER_8_4_
+#include_next <mcuconf.h>
 
-#define HAL_USE_ADC TRUE
-#define HAL_USE_SPI TRUE
-#define HAL_USE_I2C TRUE
+#undef STM32_HSECLK
+#define STM32_HSECLK 16000000
 
-#if defined(LK_WIRELESS_ENABLE) || defined(ENCODER_ENABLE)
-#    define PAL_USE_CALLBACKS TRUE
-#endif
+#undef STM32_PLLM_VALUE
+#define STM32_PLLM_VALUE 8
 
-#ifdef LK_WIRELESS_ENABLE
-#    define HAL_USE_RTC TRUE
-#endif
+#undef STM32_PLLN_VALUE
+#define STM32_PLLN_VALUE 96
 
-#include_next <halconf.h>
+#undef STM32_PLLP_VALUE
+#define STM32_PLLP_VALUE 4
 
-#undef STM32_ADC_ADCPRE
-#define STM32_ADC_ADCPRE ADC_CCR_ADCPRE_DIV8
+#undef STM32_PLLQ_VALUE
+#define STM32_PLLQ_VALUE 4
+
+#undef STM32_SPI_USE_SPI1
+#define STM32_SPI_USE_SPI1 TRUE

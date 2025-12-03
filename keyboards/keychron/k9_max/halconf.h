@@ -18,19 +18,11 @@
 
 #define _CHIBIOS_HAL_CONF_VER_8_4_
 
-#define HAL_USE_ADC TRUE
 #define HAL_USE_SPI TRUE
-#define HAL_USE_I2C TRUE
-
-#if defined(LK_WIRELESS_ENABLE) || defined(ENCODER_ENABLE)
-#    define PAL_USE_CALLBACKS TRUE
-#endif
 
 #ifdef LK_WIRELESS_ENABLE
 #    define HAL_USE_RTC TRUE
+#    define PAL_USE_CALLBACKS TRUE
 #endif
 
 #include_next <halconf.h>
-
-#undef STM32_ADC_ADCPRE
-#define STM32_ADC_ADCPRE ADC_CCR_ADCPRE_DIV8

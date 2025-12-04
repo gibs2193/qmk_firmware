@@ -1,4 +1,4 @@
-# Lemokey P1 HE
+# Lemokey P1 HE 10bit mod
 
 ![Lemokey P1 HE](https://cdn.shopify.com/s/files/1/0680/1778/3083/files/Lemokey-P1-HE-Wireless-Magnetic-Switch-Custom-Gaming-Keyboard-Shine-Through-Keycap-White-Frame-Version.jpg?v=1736135174)
 

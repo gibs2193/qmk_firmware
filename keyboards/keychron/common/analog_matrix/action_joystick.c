@@ -40,7 +40,7 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
     JOYSTICK_AXIS_VIRTUAL, // rz
 };
 
-static uint16_t travel_to_joystick_axis(uint8_t axis, uint8_t travel) {
+static uint16_t travel_to_joystick_axis(uint8_t axis, uint16_t travel) {
     (void)axis;
 
 

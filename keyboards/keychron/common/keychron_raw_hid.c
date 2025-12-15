@@ -20,6 +20,8 @@
 #include "raw_hid.h"
 #include "version.h"
 #include "language.h"
+#include "quantum.h"
+#include "via.h"         // for id_unhandled
 #include "analog_hid.h"
 #ifdef FACTORY_TEST_ENABLE
 #    include "factory_test.h"
@@ -213,3 +215,23 @@ void raw_hid_receive(uint8_t src, uint8_t *data, uint8_t length) {
 }
 #    endif
 #endif
+
+void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
+    // Basic sanity
+    if (length == 0) {
+        data[0] = id_unhandled;
+        return;
+    }
+
+    // If our custom prefix is present, forward to the custom handler:
+    if (data[0] == CUSTOM_HID_CMD) {
+        // custom_hid_receive already expects the same data/length semantics:
+        // it will strip the prefix if necessary and send a response with raw_hid_send().
+        custom_hid_receive(data, length);
+        return;
+    }
+
+    // Not handled here — return unhandled so via.c returns id_unhandled to host.
+    data[0] = id_unhandled;
+}
+

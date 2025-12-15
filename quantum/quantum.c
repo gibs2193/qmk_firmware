@@ -15,7 +15,7 @@
  */
 
 #include "quantum.h"
-#include "process_quantum.h"
+#include "qmk_settings.h"
 
 #ifdef SLEEP_LED_ENABLE
 #    include "sleep_led.h"
@@ -85,12 +85,12 @@
 #    include "process_unicode_common.h"
 #endif
 
-#ifdef LAYER_LOCK_ENABLE
-#    include "process_layer_lock.h"
+#ifdef VIAL_ENABLE
+#    include "vial.h"
 #endif
 
-#ifndef NO_ACTION_ONESHOT
-#    include "process_oneshot.h"
+#ifdef LAYER_LOCK_ENABLE
+#    include "process_layer_lock.h"
 #endif
 
 #ifdef AUDIO_ENABLE
@@ -168,7 +168,7 @@ __attribute__((weak)) void tap_code16_delay(uint16_t code, uint16_t delay) {
  * \param code The modded keycode to tap. If `code` is `KC_CAPS_LOCK`, the delay will be `TAP_HOLD_CAPS_DELAY`, otherwise `TAP_CODE_DELAY`, if defined.
  */
 __attribute__((weak)) void tap_code16(uint16_t code) {
-    tap_code16_delay(code, code == KC_CAPS_LOCK ? TAP_HOLD_CAPS_DELAY : TAP_CODE_DELAY);
+    tap_code16_delay(code, code == KC_CAPS_LOCK ? QS_tap_hold_caps_delay : QS_tap_code_delay);
 }
 
 __attribute__((weak)) bool pre_process_record_modules(uint16_t keycode, keyrecord_t *record) {
@@ -180,6 +180,10 @@ __attribute__((weak)) bool pre_process_record_kb(uint16_t keycode, keyrecord_t *
 }
 
 __attribute__((weak)) bool pre_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    return true;
+}
+
+__attribute__((weak)) bool process_action_kb(keyrecord_t *record) {
     return true;
 }
 
@@ -297,12 +301,15 @@ void post_process_record_quantum(keyrecord_t *record) {
     post_process_record_kb(keycode, record);
 }
 
-/** \brief Core keycode function
- *
- * Hands off handling to other quantum/process_keycode/ functions
- */
 bool process_record_quantum(keyrecord_t *record) {
     uint16_t keycode = get_record_keycode(record, true);
+
+    return process_record_quantum_helper(keycode, record);
+}
+/* Core keycode function, hands off handling to other functions,
+    then processes internal quantum keycodes, and then processes
+    ACTIONs.                                                      */
+bool process_record_quantum_helper(uint16_t keycode, keyrecord_t *record) {
 
     // This is how you use actions here
     // if (keycode == QK_LEADER) {
@@ -363,6 +370,9 @@ bool process_record_quantum(keyrecord_t *record) {
             process_record_kb(keycode, record) &&
 #if defined(VIA_ENABLE)
             process_record_via(keycode, record) &&
+#endif
+#if defined(VIAL_ENABLE)
+            process_record_vial(keycode, record) &&
 #endif
 #if defined(SECURE_ENABLE)
             process_secure(keycode, record) &&
@@ -445,14 +455,84 @@ bool process_record_quantum(keyrecord_t *record) {
 #ifdef CONNECTION_ENABLE
             process_connection(keycode, record) &&
 #endif
-#ifndef NO_ACTION_ONESHOT
-            process_oneshot(keycode, record) &&
-#endif
-            process_quantum(keycode, record))) {
+            true)) {
         return false;
     }
 
-    return true;
+    if (record->event.pressed) {
+        switch (keycode) {
+#ifndef NO_RESET
+            case QK_BOOTLOADER:
+                reset_keyboard();
+                return false;
+           case QK_REBOOT:
+                soft_reset_keyboard();
+                return false;
+#endif
+#ifndef NO_DEBUG
+            case QK_DEBUG_TOGGLE:
+                debug_enable ^= 1;
+                if (debug_enable) {
+                    print("DEBUG: enabled.\n");
+                } else {
+                    print("DEBUG: disabled.\n");
+                }
+#endif
+                return false;
+            case QK_CLEAR_EEPROM:
+#ifdef NO_RESET
+                eeconfig_init();
+#else
+                eeconfig_disable();
+                soft_reset_keyboard();
+#endif
+                return false;
+#ifdef VELOCIKEY_ENABLE
+            case QK_VELOCIKEY_TOGGLE:
+                velocikey_toggle();
+                return false;
+#endif
+#ifndef NO_ACTION_ONESHOT
+            case QK_ONE_SHOT_TOGGLE:
+                oneshot_toggle();
+                break;
+            case QK_ONE_SHOT_ON:
+                oneshot_enable();
+                break;
+            case QK_ONE_SHOT_OFF:
+                oneshot_disable();
+                break;
+#endif
+#ifdef ENABLE_COMPILE_KEYCODE
+            case QK_MAKE: // Compiles the firmware, and adds the flash command based on keyboard bootloader
+            {
+#    ifdef NO_ACTION_ONESHOT
+                const uint8_t temp_mod = mod_config(get_mods());
+#    else
+                const uint8_t temp_mod = mod_config(get_mods() | get_oneshot_mods());
+                clear_oneshot_mods();
+#    endif
+                clear_mods();
+
+                SEND_STRING_DELAY("qmk", TAP_CODE_DELAY);
+                if (temp_mod & MOD_MASK_SHIFT) { // if shift is held, flash rather than compile
+                    SEND_STRING_DELAY(" flash ", TAP_CODE_DELAY);
+                } else {
+                    SEND_STRING_DELAY(" compile ", TAP_CODE_DELAY);
+                }
+#    if defined(CONVERTER_ENABLED)
+                SEND_STRING_DELAY("-kb " QMK_KEYBOARD " -km " QMK_KEYMAP " -e CONVERT_TO=" CONVERTER_TARGET SS_TAP(X_ENTER), TAP_CODE_DELAY);
+#    else
+                SEND_STRING_DELAY("-kb " QMK_KEYBOARD " -km " QMK_KEYMAP SS_TAP(X_ENTER), TAP_CODE_DELAY);
+#    endif
+                if (temp_mod & MOD_MASK_SHIFT && temp_mod & MOD_MASK_CTRL) {
+                    reset_keyboard();
+                }
+            }
+#endif
+}
+    }
+    return process_action_kb(record);
 }
 
 void set_single_default_layer(uint8_t default_layer) {

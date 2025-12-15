@@ -6,7 +6,7 @@ SRC += \
     $(KEYCHRON_COMMON_DIR)/keychron_task.c \
     $(KEYCHRON_COMMON_DIR)/keychron_common.c \
     $(KEYCHRON_COMMON_DIR)/keychron_raw_hid.c \
-    $(KEYCHRON_COMMON_DIR)/analog_hid.c \
+     $(KEYCHRON_COMMON_DIR)/analog_hid.c \
     $(KEYCHRON_COMMON_DIR)/factory_test.c \
     $(KEYCHRON_COMMON_DIR)/backlit_indicator.c \
     $(KEYCHRON_COMMON_DIR)/eeconfig_kb.c \

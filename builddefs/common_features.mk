@@ -29,8 +29,6 @@ QUANTUM_SRC += \
     $(QUANTUM_DIR)/logging/debug.c \
     $(QUANTUM_DIR)/logging/sendchar.c \
     $(QUANTUM_DIR)/process_keycode/process_default_layer.c \
-    $(QUANTUM_DIR)/process_keycode/process_oneshot.c \
-    $(QUANTUM_DIR)/process_keycode/process_quantum.c \
 
 include $(QUANTUM_DIR)/nvm/rules.mk
 
@@ -665,6 +663,10 @@ endif
 
 ifeq ($(strip $(DYNAMIC_KEYMAP_ENABLE)), yes)
     SEND_STRING_ENABLE := yes
+endif
+
+ifeq ($(strip $(VIAL_ENABLE)), yes)
+    include $(BUILDDEFS_PATH)/build_vial.mk
 endif
 
 VALID_CUSTOM_MATRIX_TYPES:= yes lite no

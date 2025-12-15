@@ -241,10 +241,6 @@ bool rgb_matrix_driver_allow_shutdown(void);
 
 void        rgb_matrix_update_pwm_buffers(void);
 
-#ifdef RGB_MATRIX_MODE_NAME_ENABLE
-const char *rgb_matrix_get_mode_name(uint8_t mode);
-#endif // RGB_MATRIX_MODE_NAME_ENABLE
-
 #ifndef RGBLIGHT_ENABLE
 #    define eeconfig_update_rgblight_current eeconfig_force_flush_rgb_matrix
 #    define rgblight_reload_from_eeprom rgb_matrix_reload_from_eeprom
@@ -310,4 +306,8 @@ extern last_hit_t g_last_hit_tracker;
 #endif
 #ifdef RGB_MATRIX_FRAMEBUFFER_EFFECTS
 extern uint8_t g_rgb_frame_buffer[MATRIX_ROWS][MATRIX_COLS];
+#endif
+#if !defined(RGB_MATRIX_MAXIMUM_BRIGHTNESS) || RGB_MATRIX_MAXIMUM_BRIGHTNESS > UINT8_MAX
+#    undef RGB_MATRIX_MAXIMUM_BRIGHTNESS
+#    define RGB_MATRIX_MAXIMUM_BRIGHTNESS UINT8_MAX
 #endif

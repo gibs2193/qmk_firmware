@@ -204,10 +204,6 @@ bool led_matrix_is_driver_shutdown(void);
 bool led_matrix_driver_allow_shutdown(void);
 #endif
 
-#ifdef LED_MATRIX_MODE_NAME_ENABLE
-const char *led_matrix_get_mode_name(uint8_t mode);
-#endif // LED_MATRIX_MODE_NAME_ENABLE
-
 static inline bool led_matrix_check_finished_leds(uint8_t led_idx) {
 #if defined(LED_MATRIX_SPLIT)
     if (is_keyboard_left()) {

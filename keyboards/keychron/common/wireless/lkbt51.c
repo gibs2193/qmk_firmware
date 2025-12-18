@@ -156,7 +156,7 @@ static uint8_t  reg_offset          = 0xFF;
 static uint8_t  expect_len          = 22;
 static uint16_t connection_interval = 1;
 static uint32_t wake_time;
-static uint32_t factory_reset = 0;
+static uint32_t factory_reset_timer = 0;
 
 #ifdef LKBT51_RESET_PIN
 static volatile uint32_t lkbt51_last_comm_time = 0;
@@ -614,7 +614,7 @@ void lkbt51_factory_reset(uint8_t p2p4g_clr_msk) {
 
     lkbt51_wake();
     lkbt51_send_cmd(payload, i, false, false);
-    factory_reset = timer_read32();
+    factory_reset_timer = timer_read32();
 }
 
 void lkbt51_int_pin_test(bool enable) {
@@ -886,8 +886,8 @@ void lkbt51_task(void) {
                         break;
                     case LKBT51_DISCONNECTED:
                         event.evt_type = EVT_DISCONNECTED;
-                        if (factory_reset && timer_elapsed32(factory_reset) < 3000) {
-                            factory_reset = 0;
+                        if (factory_reset_timer && timer_elapsed32(factory_reset_timer) < 3000) {
+                            factory_reset_timer = 0;
                             event.data    = 1;
                         }
                         break;
